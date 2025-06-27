@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .error {
+            color: red;
+            text-align: center;
+            padding: 20px;
+        }
+        .refresh-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        .refresh-btn:hover {
+            background-color: #45a049;
+        }
+        .add-btn {
+            background-color: #2196F3;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+            margin-left: 10px;
+        }
+        .add-btn:hover {
+            background-color: #1976D2;
+        }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .left-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .form-buttons {
+            text-align: right;
+            margin-top: 20px;
+        }
+        .save-btn {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .save-btn:hover {
+            background-color: #45a049;
+        }
+        .cancel-btn {
+            background-color: #f44336;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        .cancel-btn:hover {
+            background-color: #da190b;
+        }
+        .action-btn {
+            padding: 5px 10px;
+            margin: 0 2px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .edit-btn {
+            background-color: #FF9800;
+            color: white;
+        }
+        .edit-btn:hover {
+            background-color: #F57C00;
+        }
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+        }
+        .delete-btn:hover {
+            background-color: #da190b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Employee Management System</h1>
+        
+        <div class="button-container">
+            <button class="refresh-btn" onclick="loadEmployees()">Refresh Employees</button>
+            <button class="add-btn" onclick="showAddEmployeeModal()">Add Employee</button>
+        </div>
+        
+        <div id="loading" class="loading">Loading employees...</div>
+        <div id="error" class="error" style="display: none;"></div>
+        
+        <table id="employeeTable" style="display: none;">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="employeeTableBody">
+                <!-- Employee data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+
+    <div id="addEmployeeModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAddEmployeeModal()">&times;</span>
+            <h2>Add Employee</h2>
+            <form id="employeeForm">
+                <div class="form-group">
+                    <label for="name">Name:</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone:</label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+                <div class="form-buttons">
+                    <button type="submit" class="save-btn">Save</button>
+                    <button type="button" class="cancel-btn" onclick="closeAddEmployeeModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000';
+
+        async function loadEmployees() {
+            const loadingDiv = document.getElementById('loading');
+            const errorDiv = document.getElementById('error');
+            const table = document.getElementById('employeeTable');
+            const tableBody = document.getElementById('employeeTableBody');
+
+            // Show loading
+            loadingDiv.style.display = 'block';
+            errorDiv.style.display = 'none';
+            table.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/employees`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const employees = await response.json();
+                
+                // Hide loading
+                loadingDiv.style.display = 'none';
+                
+                if (employees.length === 0) {
+                    errorDiv.textContent = 'No employees found.';
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+
+                // Clear existing table body
+                tableBody.innerHTML = '';
+
+                // Populate table
+                employees.forEach(employee => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${employee._id}</td>
+                        <td>${employee.name}</td>
+                        <td>${employee.email}</td>
+                        <td>${employee.ph}</td>
+                        <td>
+                            <button class="edit-btn action-btn" onclick="editEmployee('${employee._id}')">Edit</button>
+                            <button class="delete-btn action-btn" onclick="deleteEmployee('${employee._id}', '${employee.name}')">Delete</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                // Show table
+                table.style.display = 'table';
+
+            } catch (error) {
+                console.error('Error fetching employees:', error);
+                loadingDiv.style.display = 'none';
+                errorDiv.textContent = `Error loading employees: ${error.message}`;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        // Load employees when page loads
+        document.addEventListener('DOMContentLoaded', loadEmployees);
+
+        function showAddEmployeeModal() {
+            document.getElementById('addEmployeeModal').style.display = 'block';
+        }
+
+        function closeAddEmployeeModal() {
+            document.getElementById('addEmployeeModal').style.display = 'none';
+        }
+
+        document.getElementById('employeeForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+
+            const employee = {
+                name: name,
+                email: email,
+                ph: phone
+            };
+
+            fetch(`${API_BASE_URL}/employees`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(employee)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Error adding employee:', data.error);
+                    alert('Error adding employee: ' + data.error);
+                } else {
+                    alert('Employee added successfully!');
+                    closeAddEmployeeModal();
+                    // loadEmployees();
+                }
+            })
+            .catch(error => {
+                console.error('Error adding employee:', error);
+                alert('Error adding employee: ' + error.message);
+            });
+        });
+
+        function editEmployee(id) {
+            // Open edit page in new window/tab with employee ID as parameter
+            window.open(`edit-employee.html?id=${id}`, '_blank');
+        }
+
+        function deleteEmployee(id, name) {
+            if (confirm(`Are you sure you want to delete employee "${name}"?`)) {
+                fetch(`${API_BASE_URL}/employee/${id}`, {
+                    method: 'DELETE'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert('Error deleting employee: ' + data.error);
+                    } else {
+                        alert('Employee deleted successfully!');
+                        loadEmployees(); // Refresh the table
+                    }
+                })
+                .catch(error => {
+                    console.error('Error deleting employee:', error);
+                    alert('Error deleting employee: ' + error.message);
+                });
+            }
+        }
+    </script>
+</body>
+</html> 
