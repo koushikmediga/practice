@@ -50,6 +50,7 @@ app.get('/employees', async (req, res) => {
 // GET ONE
 app.get('/employee/:id', async (req, res) => {
   try {
+    console.log("get one is called");
     const employee = await Employee.findById(req.params.id);
     if (!employee) return res.status(404).json({ error: 'Employee not found' });
     res.json(employee);
